@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>台灣便當物價觀測站</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --secondary: #db2777;
+    }
+    body { 
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #f8fafc;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .btn-submit {
+      background-color: #1e293b;
+      transition: all 0.2s ease;
+    }
+    .btn-submit:hover {
+      background-color: #0f172a;
+      transform: translateY(-1px);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fade { animation: fadeIn 0.5s ease-in-out; }
+
+    /* 自定義捲軸 */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  </style>
+</head>
+<body class="min-h-screen pb-20 text-slate-800">
+
+  <header class="py-16 border-b border-slate-200 bg-white">
+    <div class="container mx-auto px-4 text-center">
+      <div class="inline-block px-3 py-1 mb-6 text-xs font-bold tracking-widest text-slate-500 border border-slate-200 rounded">
+        DATA ANALYSIS PROJECT
+      </div>
+      <h1 class="text-4xl font-bold mb-4 tracking-tight text-slate-900">
+        台灣便當物價觀測系統
+      </h1>
+      <p class="text-slate-500 max-w-xl mx-auto text-base">
+        長期追蹤市場民生物價變動，透過數據可視化分析通膨對社會生活成本之影響。
+      </p>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 max-w-7xl mt-12">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-10">
+      
+      <aside class="xl:col-span-4 animate-fade">
+        <div class="bg-white p-8 rounded border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold mb-8 flex items-center text-slate-900 uppercase tracking-wider">
+            數據錄入
+          </h2>
+          <form id="bentoForm" class="space-y-6 text-sm">
+            <div class="space-y-2">
+              <label class="font-bold text-slate-700">資料來源機構</label>
+              <input type="text" id="provider" placeholder="請輸入來源名稱" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-1 focus:ring-slate-900 outline-none transition-all">
+            </div>
+            <div class="space-y-2">
+              <label class="font-bold text-slate-700">品項名稱</label>
+              <input type="text" id="name" required placeholder="例如：台鐵排骨便當" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-1 focus:ring-slate-900 outline-none transition-all">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="font-bold text-slate-700">市場價格 (TWD)</label>
+                <input type="number" id="price" required placeholder="0" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-1 focus:ring-slate-900 outline-none transition-all font-mono">
+              </div>
+              <div class="space-y-2">
+                <label class="font-bold text-slate-700">觀測日期</label>
+                <input type="date" id="date" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-1 focus:ring-slate-900 outline-none transition-all">
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="font-bold text-slate-700">原始資料網址</label>
+              <input type="url" id="source" required placeholder="https://..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-1 focus:ring-slate-900 outline-none transition-all">
+            </div>
+            <button type="submit" class="btn-submit w-full text-white font-bold py-4 rounded shadow-sm uppercase tracking-widest text-xs">
+              確認送出
+            </button>
+          </form>
+          <p id="message" class="mt-4 text-center font-medium text-xs h-4"></p>
+        </div>
+      </aside>
+
+      <section class="xl:col-span-8 space-y-10 animate-fade">
+        
+        <div class="bg-white p-8 rounded border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold mb-8 text-slate-900 uppercase tracking-wider">
+            價格走勢分析
+          </h2>
+          <div class="relative h-80">
+            <canvas id="priceChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-8 rounded border border-slate-200 shadow-sm">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
+            <h2 class="text-lg font-bold text-slate-900 uppercase tracking-wider">
+              歷史觀測紀錄
+            </h2>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+              <input type="text" id="searchInput" placeholder="搜尋項目..." class="w-full md:w-48 px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded outline-none focus:bg-white focus:ring-1 focus:ring-slate-900 transition-all">
+              <button onclick="fetchAllData()" class="px-6 py-2 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-all text-xs font-bold border border-slate-200">
+                查詢
+              </button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left" id="bentoTable">
+              <thead>
+                <tr class="border-b border-slate-900 text-slate-900 text-xs font-bold uppercase tracking-widest">
+                  <th class="px-2 py-4">DATE</th>
+                  <th class="px-4 py-4">ITEM / PROVIDER</th>
+                  <th class="px-4 py-4 text-right">UNIT PRICE</th>
+                  <th class="px-4 py-4 text-center">LINK</th>
+                </tr>
+              </thead>
+              <tbody id="bentoTableBody" class="text-sm divide-y divide-slate-100">
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <script>
+    let myChart = null;
+
+    document.getElementById('bentoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('message');
+      msg.innerText = "正在進行傳輸...";
+      msg.className = "mt-4 text-center text-slate-400 text-xs";
+
+      const data = {
+        provider: document.getElementById('provider').value || '系統預設',
+        name: document.getElementById('name').value,
+        price: document.getElementById('price').value,
+        date: document.getElementById('date').value,
+        source: document.getElementById('source').value
+      };
+
+      try {
+        const response = await fetch('/api/insert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          msg.className = "mt-4 text-center text-slate-900 font-bold text-xs";
+          msg.innerText = "SUCCESS: 資料已寫入資料庫";
+          setTimeout(() => msg.innerText = "", 3000);
+          fetchAllData();
+          e.target.reset();
+        }
+      } catch (error) {
+        msg.className = "mt-4 text-center text-red-600 font-bold text-xs";
+        msg.innerText = "ERROR: 傳輸中斷";
+      }
+    });
+
+    async function fetchAllData() {
+      const keyword = document.getElementById('searchInput').value;
+      try {
+        const url = keyword ? `/api/quotes?keyword=${encodeURIComponent(keyword)}` : '/api/quotes';
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) return;
+
+        const rows = data;
+        rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const tbody = document.getElementById('bentoTableBody');
+        tbody.innerHTML = ''; 
+        
+        rows.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 transition-colors";
+          
+          tr.innerHTML = `
+            <td class="px-2 py-5 font-mono text-xs text-slate-400">${row.date}</td>
+            <td class="px-4 py-5">
+              <div class="font-bold text-slate-800">${row.name}</div>
+              <div class="text-[10px] text-slate-400 uppercase tracking-tighter mt-1">${row.provider}</div>
+            </td>
+            <td class="px-4 py-5 text-right font-mono font-bold text-slate-900 italic">
+              TWD ${row.price}
+            </td>
+            <td class="px-4 py-5 text-center">
+                <a href="${row.source}" target="_blank" class="text-[10px] font-bold border-b border-slate-300 hover:border-slate-900 text-slate-400 hover:text-slate-900 transition-all uppercase">
+                  View
+                </a>
+            </td>
+          `;
+          tbody.prepend(tr);
+        });
+
+        renderChart(rows);
+      } catch (error) {
+        console.error('更新資料失敗:', error);
+      }
+    }
+
+    function renderChart(data) {
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      const railwayData = data.filter(d => d.name.includes('台鐵'));
+      const marketData = data.filter(d => d.name.includes('市場均價'));
+
+      if (myChart) myChart.destroy();
+
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [...new Set(data.map(d => d.date))],
+          datasets: [
+            {
+              label: '台鐵便當',
+              data: railwayData.map(d => ({ x: d.date, y: d.price })),
+              borderColor: '#0f172a',
+              backgroundColor: '#0f172a05',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: '#0f172a',
+              tension: 0.2
+            },
+            {
+              label: '市場均價',
+              data: marketData.map(d => ({ x: d.date, y: d.price })),
+              borderColor: '#94a3b8',
+              backgroundColor: '#94a3b805',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: '#94a3b8',
+              tension: 0.2,
+              borderDash: [5, 5]
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              position: 'bottom',
+              labels: { 
+                boxWidth: 12, 
+                font: { family: 'Noto Sans TC', size: 11, weight: 'bold' },
+                padding: 20
+              } 
+            } 
+          },
+          scales: {
+            y: { 
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            x: { 
+              grid: { display: false },
+              ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    fetchAllData();
+  </script>
+</body>
+</html>

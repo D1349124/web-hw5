@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "node myexpress/bin/www"
+  },
+  "dependencies": {
+    "sqlite3": "^6.0.1"
+  }
+}
