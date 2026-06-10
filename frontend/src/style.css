@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #4f46e5;
+  --secondary: #db2777;
+}
+
+body { 
+  font-family: 'Noto Sans TC', sans-serif;
+  background-color: #f8fafc;
+}
+
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e2e8f0;
+}
+
+.btn-submit {
+  background-color: #1e293b;
+  transition: all 0.2s ease;
+}
+.btn-submit:hover {
+  background-color: #0f172a;
+  transform: translateY(-1px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade { animation: fadeIn 0.5s ease-in-out; }
+
+/* 自定義捲軸 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }

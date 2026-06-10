@@ -1,8 +1,15 @@
 {
   "scripts": {
-    "start": "node myexpress/bin/www"
+    "start": "node myexpress/bin/www",
+    "backend": "node myexpress/bin/www",
+    "frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "dependencies": {
     "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
