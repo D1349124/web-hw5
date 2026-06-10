@@ -8,8 +8,9 @@ export default defineConfig({
     vue(),
     tailwindcss(),
   ],
+  base: '/web-hw5/',
   build: {
-    outDir: '../myexpress/public',
+    outDir: 'dist',
     emptyOutDir: true,
   },
   server: {
