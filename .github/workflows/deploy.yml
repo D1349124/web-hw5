@@ -1,4 +1,4 @@
-# Version: 1.0.1
+# Version: 1.0.2 - Force deployment to frontend
 name: Deploy to GitHub Pages
 
 on:
